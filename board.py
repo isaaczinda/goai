@@ -12,6 +12,36 @@ BLACK = 0
 WHITE = 1
 EMPTY = 2
 
+def read_drawing(str):
+    """
+    We want to be able to take in a grid, where . represents empty,
+    X represents black, and O represents white, and convert it into an array
+    of BLACK, WHITE, EMPTY
+    """
+
+    grid = [[]]
+    if str.startswith('\n'):
+        str = str[1:]
+    for letter in str:
+        if letter == '\n':
+            grid.append([])
+        elif letter == 'X':
+            grid[-1].append(BLACK)
+        elif letter == 'O':
+            grid[-1].append(WHITE)
+        elif letter == '.':
+            grid[-1].append(EMPTY)
+    return transpose(grid)
+
+def transpose(grid):
+    new_grid = [[0 for i in range(len(grid))] for j in range(len(grid[0]))]
+    for i in range(len(grid)):
+        for j in range(len(grid[0])):
+            new_grid[j][i] = grid[i][j]
+
+    return new_grid
+
+
 class BoardState:
     def __init__(self, board, turn, prevBoardState=None):
 
@@ -52,61 +82,77 @@ class BoardState:
     # # def __removeTakenPieces(self):
     #     ''' returns (new cleaned up board state, number pieces removed) '''
 
-    def _blockSuffocated(self, otherColor, widthPos, heightPos):
-        checked = []
+    def _getBlock(self, widthPos, heightPos):
+        """ returns None if this is an empty square """
 
-        toCheck = []
+        color = self.board[widthPos][heightPos]
+        if color == EMPTY:
+            print("empty")
+            return None
 
-        # enqueue 1
+        searched = []
+
+        # assume everything in here hasn't already been searched
+        toSearch = [(widthPos, heightPos)]
+
+        while len(toSearch) > 0:
+            elem = toSearch.pop()
+
+            neighbors = self._getNeighborsSameColor(elem[0], elem[1], exclude=searched)
+            toSearch += neighbors
+
+            searched.append(elem) # don't search this again
+
+        return searched
+
+
+    def _blockSuffocated(self, widthPos, heightPos):
+        color = self.board[widthPos][heightPos]
+        otherColor = not color
+
+        if color == EMPTY:
+            return None
+
+        # First, we get the block that this piece is located in
+        block = self._getBlock(widthPos, heightPos)
+
+
 
         # check if its suffocated, if its not we're good!
-        if not all([
-            self._suffocatedLeft(otherColor, widthPos, heightPos),
-            self._suffocatedRight(otherColor, widthPos, heightPos),
-            self._suffocatedBelow(otherColor, widthPos, heightPos),
-            self._suffocatedAbove(otherColor, widthPos, heightPos),
-        ]):
-            return False
 
-        # If it is suffocated, check its neighbors
-        neighbors = self._getNeighbors(widthPos, heightPos, checked)
-
-
-
-        # If there aren't neighbors, its a singleton OR they've all been
-        # checked
-        if len(neighbors) == 0:
-            return True
-
-        for neighbor in neighbors:
-            # If
-            if not self._blockSuffocated(otherColor, neighbor[0], neighbor[1]):
+        for blockWidthPos, blockHeightPos in block:
+            # If a SINGLE one of the neighbors is not suffocated in a
+            # single direction, the block is not suffocated
+            if not all([
+                self._suffocatedLeft(otherColor, blockWidthPos, blockHeightPos),
+                self._suffocatedRight(otherColor, blockWidthPos, blockHeightPos),
+                self._suffocatedBelow(otherColor, blockWidthPos, blockHeightPos),
+                self._suffocatedAbove(otherColor, blockWidthPos, blockHeightPos),
+            ]):
                 return False
 
+        return True
 
 
-        [ for neighbor in neighbors]
-
-
-    def _getNeighbors(self, widthPos, heightPos, exclude=[]):
+    def _getNeighborsSameColor(self, widthPos, heightPos, exclude=[]):
         color = self.board[widthPos][heightPos]
 
         neighbors = []
 
         # left
-        if widthPos != 0:
+        if widthPos != 0 and self.board[widthPos-1][heightPos] == color:
             neighbors.append((widthPos-1, heightPos))
 
         # right
-        if widthPos != self.width - 1:
+        if widthPos != self.width - 1 and self.board[widthPos+1][heightPos] == color:
             neighbors.append((widthPos+1, heightPos))
 
         # up
-        if heightPos != 0:
+        if heightPos != 0 and self.board[widthPos][heightPos-1] == color:
             neighbors.append((widthPos, heightPos-1))
 
         # down
-        if heightPos != self.height-1:
+        if heightPos != self.height-1 and self.board[widthPos][heightPos+1] == color:
             neighbors.append((widthPos, heightPos+1))
 
         # remove excluded ones

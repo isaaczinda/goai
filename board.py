@@ -79,15 +79,50 @@ class BoardState:
 
         return self.turn == other.turn and self.board == other.board
 
-    # # def __removeTakenPieces(self):
-    #     ''' returns (new cleaned up board state, number pieces removed) '''
+    def _removeTakenPieces(self, color):
+        ''' returns number pieces removed '''
+
+        numRemoved = 0
+
+        for w in range(self.width):
+            for h in range(self.height):
+                # If this square is the provided color and part of a
+                # suffocated block, remove the whole block.
+                if self.board[w][h] == color and self._blockSuffocated(w, h):
+                    for pos in self._getBlock(w, h):
+                        self.board[pos[0]][pos[1]] = EMPTY
+                        numRemoved += 1
+
+        return numRemoved
+
+    def _checkMoveLegal(self, widthPos, heightPos):
+
+        # Not legal if there's something there
+        if self.board[widthPos][heightPos] != EMPTY:
+            return False
+
+        # Ko -- can't return board to two states ago
+        newState = self._placeUnverified(widthPos, heightPos)
+        if newState == self.prevBoardState:
+            return False
+
+        # _placeUnverified has already removed all of the opponent's taken
+        # pieces. If after that the board ends in a position where our pieces
+        # are taken, this means we committed suicide (placed in a place
+        # that gets taken).
+        if newState._removeTakenPieces(self.turn) > 0:
+            return False
+
+        # Otherwise legal
+        return True
+
+
 
     def _getBlock(self, widthPos, heightPos):
         """ returns None if this is an empty square """
 
         color = self.board[widthPos][heightPos]
         if color == EMPTY:
-            print("empty")
             return None
 
         searched = []
@@ -133,10 +168,7 @@ class BoardState:
 
         return True
 
-
-    def _getNeighborsSameColor(self, widthPos, heightPos, exclude=[]):
-        color = self.board[widthPos][heightPos]
-
+    def _getNeighborsOfColor(self, color, widthPos, heightPos, exclude=[]):
         neighbors = []
 
         # left
@@ -157,6 +189,10 @@ class BoardState:
 
         # remove excluded ones
         return [t for t in neighbors if t not in exclude]
+
+    def _getNeighborsSameColor(self, widthPos, heightPos, exclude=[]):
+        color = self.board[widthPos][heightPos]
+        return self._getNeighborsOfColor(color, widthPos, heightPos, exclude=exclude)
 
 
     def _suffocatedLeft(self, otherColor, widthPos, heightPos):
@@ -224,67 +260,46 @@ class BoardState:
         # Otherwise it's empty so we return False
         return False
 
-    def legalMoves(self):
-        """ Returns positions on the board which are empty and
-        aren't surrounded. """
-
-        areEmpty = [[item == EMPTY for item in row] for row in self.board]
-
-
-        # check if the spot is surrounded by the color that is not
-        # about to place
-
-        otherColor = not self.turn
-
-        for w in range(self.width):
-            for h in range(self.height):
-                # Checks if this shit's surrounded, its not a legal move if
-                # surrounded. HOWEVER, it IS legal to play in a surrounded
-                # area if you take an opponent's piece.
-                if all([
-                    self.__stoneToLeft(otherColor, w, h),
-                    self.__stoneToRight(otherColor, w, h),
-                    self.__stoneAbove(otherColor, w, h),
-                    self.__stoneBelow(otherColor, w, h),
-                    self.__removeTakenPieces()[1] == 0
-                ]):
-                    areEmpty[w][h] = False
-
-        return areEmpty
-
-
-    def place(self, widthPos, heightPos):
-        """ Returns new board state. If move was not legal,
-        returns None. """
-
-        if not self.legalMoves()[widthPos][heightPos]:
-            return None
-
+    def _placeUnverified(self, widthPos, heightPos):
         newBoard = copy.deepcopy(self.board)
         newBoard[widthPos][heightPos] = self.turn
 
         newState = BoardState(newBoard, not self.turn, prevBoardState=self)
 
         # Now "take" the pieces
-        newState, _ = newState.__removeTakenPieces()
-
-        # now check to make sure this move doesn't repeat what the board
-        # state was 2 turns ago. Since self is ~now~ 1 board state ago, we
-        # just have to check self.prevBoardState.
-
-        if self.prevBoardState != None and self.prevBoardState == newState:
-            return None
-
+        # We pass in the other color, because only their pieces are taken.
+        newState._removeTakenPieces(not self.turn)
         return newState
+
+
+    def place(self, widthPos, heightPos):
+        """ Returns new board state. If move was not legal,
+        returns None. """
+
+        if not self._checkMoveLegal(widthPos, heightPos):
+            return None
+        return self._placeUnverified(widthPos, heightPos)
 
     def score(self, color):
         # count up my own stones
         numStones = sum([sum([elem == color for elem in row]) for row in self.board])
 
+        territoryOwned = 0
+
         # count empty terratory that we occupy
+        for w in range(self.width):
+            for h in range(self.height):
+                # only counts as territory if its empty
+                if self.board[w][h] != EMPTY:
+                    continue
 
+                theirColor = len(self._getNeighborsOfColor(not color, w, h))
+                ourColor = len(self._getNeighborsOfColor(color, w, h))
 
+                if theirColor == 0 and ourColor > 0:
+                    territoryOwned += 1
 
+        return numStones + territoryOwned
 
 if __name__ == '__main__':
     test()

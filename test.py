@@ -1,5 +1,64 @@
 import board
 
+def test_score():
+    b = board.BoardState(board.read_drawing("""
+    XX..O..
+    X...X.O
+    .X....O."""), board.WHITE)
+
+    # stones, territory
+    assert b.score(board.BLACK) == 5 + 6
+    assert b.score(board.WHITE) == 3 + 4
+
+def test_check_move_legal():
+    prev_b = board.BoardState(board.read_drawing("""
+    .XO.
+    XO.O
+    .XO."""), board.BLACK)
+    b = board.BoardState(board.read_drawing("""
+    .XO.
+    X.XO
+    .XO."""), board.WHITE, prevBoardState=prev_b)
+
+    # occupied
+    assert not b._checkMoveLegal(1, 0)
+    # empty
+    assert b._checkMoveLegal(3, 0)
+    # ko
+    assert not b._checkMoveLegal(1, 1)
+    # taken
+    assert not b._checkMoveLegal(0, 0)
+
+def test_place():
+    b = board.BoardState(board.read_drawing("""
+    .XO.
+    XO.O
+    .XO."""), board.BLACK)
+
+    b_new = b.place(2, 1)
+
+    assert b_new == board.BoardState(board.read_drawing("""
+    .XO.
+    X.XO
+    .XO."""), board.WHITE, prevBoardState=b)
+
+    assert b_new.prevBoardState == b
+
+
+def test_remove_taken_pieces():
+    b = board.BoardState(board.read_drawing("""
+    XO.
+    OXO
+    .O."""), board.BLACK)
+
+    assert b._removeTakenPieces(board.WHITE) == 0
+    assert b._removeTakenPieces(board.BLACK) == 2
+
+    assert b.board == board.read_drawing("""
+    .O.
+    O.O
+    .O.""")
+
 def test_suffocated():
     b = board.BoardState(board.read_drawing("""
     XO.
@@ -46,26 +105,6 @@ def test_get_block():
     assert len(b._getBlock(1, 2)) == 1
     assert b._getBlock(2, 2) == None
 
-
-    # b = b.place(2, 0)
-    # print(b)
-    # b = b.place(1, 0)
-    # print(b)
-    # b = b.place(3, 1)
-    # print(b)
-    # b = b.place(0, 1)
-    # print(b)
-    # b = b.place(2, 2)
-    # print(b)
-    # b = b.place(1, 2)
-    # print(b)
-    # b = b.place(1, 1)
-    # print(b)
-    # b = b.place(2, 1)
-    # print(b)
-
-    # # Illegal moves must return None
-    # assert b.place(1, 1) == None
 
 def test_transpose():
     matrix = [[1, 2, 3, 4, 5], [0, 0, 0, 0, 0]]

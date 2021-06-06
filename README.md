@@ -58,3 +58,17 @@ verbose outputs gets printed every 128 timesteps, no matter what.
 
 TODO: how to see what the reward is at each episode ?
 TODO: how to design reward functions?
+
+When applying RL to a custom problem, you should always normalize the input to the agent (e.g. using VecNormalize
+for PPO2/A2C)
+
+HYPERTUNE:
+
+learning_rate=0.00025, total_timesteps=1000, nminibatches=4 -- mean -10
+learning_rate=0.00025, total_timesteps=10000, nminibatches=4 -- mean -9 to -0
+learning_rate=0.0025, total_timesteps=10000, nminibatches=4 -- mean 4.34
+learning_rate=0.025, total_timesteps=10000, nminibatches=4 -- mean 0-3
+learning_rate=0.0025, total_timesteps=10000, nminibatches=64 -- mean -9.6
+learning_rate=0.0025, total_timesteps=10000, nminibatches=1 -- mean -1, 3.08
+
+learning_rate=0.0025, total_timesteps=100000, nminibatches=4 -- 

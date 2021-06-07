@@ -8,32 +8,32 @@ from stable_baselines.common.env_checker import check_env
 
 # Since opponent_model wasn't set, this environment uses a random
 # opponent.
-env = gym.make('custom_gyms:tictac4-v0')
-
-print("CHECKING ENV")
-check_env(env)
-print("CHECKED, MF")
-
-# Optional: PPO2 requires a vectorized environment to run
-# the env is now wrapped automatically when passing it to the constructor
-# env = DummyVecEnv([lambda: env])
-
-# what we've tried:
-#  - CnnLstmPolicy
-#  - CnnPolicy
-#  - MlpPolicy
-#
-
-
-# nminibatches
-
+firstEnv = gym.make('custom_gyms:tictac4-v0')
+check_env(firstEnv)
 
 # batch_size (number of steps per NN training) = self.n_batch / self.nminibatches
-model = PPO2("MlpPolicy", env, verbose=False, learning_rate=0.0025, nminibatches=4) # default is 2.5e-4
-model.learn(total_timesteps=100000) # only prints every 128 timesteps
+firstModel = PPO2("MlpPolicy", firstEnv, verbose=False, learning_rate=0.0025, nminibatches=4) # default is 2.5e-4
+firstModel.learn(total_timesteps=10000) # only prints every 128 timesteps
 
-mean_reward, std_reward = evaluate_policy(model, env, n_eval_episodes=1000)
+mean_reward, std_reward = evaluate_policy(firstModel, firstEnv, n_eval_episodes=1000)
 print(f'mean reward: {mean_reward}, std reward {std_reward}')
+
+print("*****meta-training*****")
+
+secondEnv = gym.make('custom_gyms:tictac4-v0', opponent_model=firstModel)
+check_env(secondEnv)
+
+# TODO: continue training OG model
+
+# batch_size (number of steps per NN training) = self.n_batch / self.nminibatches
+secondModel = PPO2("MlpPolicy", secondEnv, verbose=False, learning_rate=0.0025, nminibatches=4) # default is 2.5e-4
+secondModel.learn(total_timesteps=10000) # only prints every 128 timesteps
+
+# Evaluate model against random opponent
+mean_reward, std_reward = evaluate_policy(secondModel, firstEnv, n_eval_episodes=1000)
+print(f'mean reward: {mean_reward}, std reward {std_reward}')
+
+
 
 #
 # for n in range(5):
@@ -52,7 +52,3 @@ print(f'mean reward: {mean_reward}, std reward {std_reward}')
 #
 #         if done:
 #             break
-
-
-
-env.close()

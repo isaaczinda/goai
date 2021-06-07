@@ -70,5 +70,11 @@ learning_rate=0.0025, total_timesteps=10000, nminibatches=4 -- mean 4.34
 learning_rate=0.025, total_timesteps=10000, nminibatches=4 -- mean 0-3
 learning_rate=0.0025, total_timesteps=10000, nminibatches=64 -- mean -9.6
 learning_rate=0.0025, total_timesteps=10000, nminibatches=1 -- mean -1, 3.08
+learning_rate=0.0025, total_timesteps=100000, nminibatches=4 -- 7.94
 
-learning_rate=0.0025, total_timesteps=100000, nminibatches=4 -- 
+PLAYING AGAINST ITSELF (learning_rate=0.0025, total_timesteps=100000, nminibatches=4):
+
+(Opponent is always O, opponent is trained against random in same run)
+Training against random: 7.08, training against self: 6.18
+Training against random: 8.46, training against self: 6.78
+Training against random: 5.34, training against self: 2.7

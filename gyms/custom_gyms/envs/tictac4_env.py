@@ -85,15 +85,8 @@ class TicTac4(gym.Env):
 
 	def _makeOpponentMove(self):
 		# try moves until one of them is legal
-		while True:
-			action, _ = self.opponent_model.predict(self)
-			row, col = get_move_from_array(action)
-
-			if self.state[row][col] == EMPTY:
-				# place the opponent's piece
-				self.state[row][col] = not self.agent_piece
-				self.counter += 1
-				break
+		action, _ = self.opponent_model.predict(self.state.flatten())
+		return get_move_from_array(action)
 
 
 	def step(self, action):
@@ -116,8 +109,16 @@ class TicTac4(gym.Env):
 		if self.counter == 9:
 			return self.state.flatten(), DRAW_REWARD, True, {}
 
-		# Then play the opponent's move
-		self._makeOpponentMove()
+		# Then choose the square opponent will play on
+		opp_row, opp_col = self._makeOpponentMove()
+
+		# Check legality; if it's illegal opponent loses.
+		if self.state[opp_row][opp_col] != EMPTY:
+			return self.state.flatten(), WIN_REWARD, True, {"IllegalMove": True}
+
+		# Opponent plays and increment counter
+		self.state[opp_row][opp_col] = not self.agent_piece
+		self.counter += 1
 
 		# Check to see if the opponent just won
 		if self._checkWinner() == (not self.agent_piece):

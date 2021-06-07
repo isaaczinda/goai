@@ -8,30 +8,36 @@ from stable_baselines.common.env_checker import check_env
 
 # Since opponent_model wasn't set, this environment uses a random
 # opponent.
-firstEnv = gym.make('custom_gyms:tictac4-v0')
-check_env(firstEnv)
+random_env = gym.make('custom_gyms:tictac4-v0')
+check_env(random_env)
+model = PPO2("MlpPolicy", random_env, verbose=False, learning_rate=0.0025, nminibatches=4)
 
-# batch_size (number of steps per NN training) = self.n_batch / self.nminibatches
-firstModel = PPO2("MlpPolicy", firstEnv, verbose=False, learning_rate=0.0025, nminibatches=4) # default is 2.5e-4
-firstModel.learn(total_timesteps=10000) # only prints every 128 timesteps
+for i in range(50):
 
-mean_reward, std_reward = evaluate_policy(firstModel, firstEnv, n_eval_episodes=1000)
-print(f'mean reward: {mean_reward}, std reward {std_reward}')
+    # If we have a trained model, pass it into env
+    if model:
+        env = gym.make('custom_gyms:tictac4-v0', opponent_model=model)
+        check_env(env)
+    else:
+        env = random_env
 
-print("*****meta-training*****")
+    # batch_size (number of steps per NN training) = self.n_batch / self.nminibatches
 
-secondEnv = gym.make('custom_gyms:tictac4-v0', opponent_model=firstModel)
-check_env(secondEnv)
+    # we're just copying what's going on here:
+    #  - https://github.com/hill-a/stable-baselines/blob/master/stable_baselines/common/base_class.py#L78-L84
+    model.set_env(DummyVecEnv([lambda: env])) # default is 2.5e-4
+    model.learn(total_timesteps=2048) # only prints every 128 timesteps
 
-# TODO: continue training OG model
+    print(f'round {i}........')
 
-# batch_size (number of steps per NN training) = self.n_batch / self.nminibatches
-secondModel = PPO2("MlpPolicy", secondEnv, verbose=False, learning_rate=0.0025, nminibatches=4) # default is 2.5e-4
-secondModel.learn(total_timesteps=10000) # only prints every 128 timesteps
+    # Evaluate against random_env to see how it plays against a random opponent
+    mean_reward, std_reward = evaluate_policy(model, random_env, n_eval_episodes=1000)
+    print(f'random opponent: mean reward: {mean_reward}, std reward {std_reward}')
 
-# Evaluate model against random opponent
-mean_reward, std_reward = evaluate_policy(secondModel, firstEnv, n_eval_episodes=1000)
-print(f'mean reward: {mean_reward}, std reward {std_reward}')
+    # Evaluate against env to see how it plays against the current opponent
+    mean_reward, std_reward = evaluate_policy(model, env, n_eval_episodes=1000)
+    print(f'last opponent: mean reward: {mean_reward}, std reward {std_reward}')
+
 
 
 

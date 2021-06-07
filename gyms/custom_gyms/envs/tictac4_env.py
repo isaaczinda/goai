@@ -55,7 +55,7 @@ class TicTac4(gym.Env):
 		else:
 			print("Using provided opponent model.")
 			self.opponent_model = opponent_model
-
+			
 		self.reset()
 
 	def _checkWinner(self):

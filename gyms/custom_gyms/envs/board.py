@@ -33,6 +33,9 @@ def read_drawing(str):
             grid[-1].append(EMPTY)
     return transpose(grid)
 
+def generate_empty_board(width, height):
+    return [[EMPTY for i in range(height)] for s in range(width)]
+
 def transpose(grid):
     new_grid = [[0 for i in range(len(grid))] for j in range(len(grid[0]))]
     for i in range(len(grid)):
@@ -300,6 +303,15 @@ class BoardState:
                     territoryOwned += 1
 
         return numStones + territoryOwned
+
+    def checkWinner(self):
+        whiteScore = self.score(WHITE) + .5
+        blackScore = self.score(BLACK)
+
+        if whiteScore > blackScore:
+            return WHITE
+
+        return BLACK
 
 if __name__ == '__main__':
     test()

@@ -2,6 +2,7 @@ import gym
 from gym import error, spaces, utils
 from gym.utils import seeding
 import numpy as np
+from numpy.random import default_rng
 
 
 O = 0
@@ -28,12 +29,14 @@ def get_move_from_array(action):
 class RandomModel:
 	def __init__(self, action_space):
 		self.action_space = action_space
+		self.action_space.seed(123)
 
 	def predict(self, _):
-
 		# The sample() method returns a random action from the space
 		action = self.action_space.sample()
 		return action, None
+
+
 
 class TicTac4(gym.Env):
 	metadata = {'render.modes': ['human']}
@@ -43,19 +46,12 @@ class TicTac4(gym.Env):
 	# allowed values are 0 - 2 to represent EMPTY, O, and X states
 	observation_space = spaces.Box(low=0, high=2, shape=(9,), dtype=np.float32)
 
-	def __init__(self, opponent_model=None, agent_piece=X):
+	def __init__(self, opponent_models=[RandomModel(action_space)], agent_piece=X):
 		# contains the piece type that the agent will use
 		self.agent_piece = agent_piece
 
-		# If an opponent model was provided, use that. If not, just use a
-		# model that makes random choices.
-		if opponent_model == None:
-			print("Using random opponent model.")
-			self.opponent_model = RandomModel(self.action_space)
-		else:
-			print("Using provided opponent model.")
-			self.opponent_model = opponent_model
-			
+		self.opponent_models = opponent_models
+
 		self.reset()
 
 	def _checkWinner(self):
@@ -85,7 +81,7 @@ class TicTac4(gym.Env):
 
 	def _makeOpponentMove(self):
 		# try moves until one of them is legal
-		action, _ = self.opponent_model.predict(self.state.flatten())
+		action, _ = self.current_opponent_model.predict(self.state.flatten())
 		return get_move_from_array(action)
 
 
@@ -114,7 +110,7 @@ class TicTac4(gym.Env):
 
 		# Check legality; if it's illegal opponent loses.
 		if self.state[opp_row][opp_col] != EMPTY:
-			return self.state.flatten(), WIN_REWARD, True, {"IllegalMove": True}
+			return self.state.flatten(), WIN_REWARD, True, {"OpponentIllegalMove": True}
 
 		# Opponent plays and increment counter
 		self.state[opp_row][opp_col] = not self.agent_piece
@@ -137,6 +133,10 @@ class TicTac4(gym.Env):
 
 		self.state = np.array([[EMPTY for i in range(3)] for s in range(3)])
 
+		# choose a random opponent to play for this game
+		index = np.random.randint(0, high=len(self.opponent_models), dtype=int)
+		self.current_opponent_model = self.opponent_models[index]
+
 		# If our piece is O, this means the opponent is X and they should
 		# go first.
 		# We put this here because the starting environment which the agent
@@ -157,3 +157,4 @@ class TicTac4(gym.Env):
 			for j in range(3):
 				print(stateToPic[self.state[i][j]], end = " ")
 			print("")
+		print("---")

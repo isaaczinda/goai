@@ -12,11 +12,8 @@ EMPTY = 2
 WIN_REWARD = 10
 LOSS_REWARD = -10
 DRAW_REWARD = 0
+ILLEGAL_MOVE_REWARD = -20
 
-# WIN_REWARD = 100
-# LOSS_REWARD = -100
-# DRAW_REWARD = -50
-# ILLEGAL_MOVE_REWARD = -10
 
 def get_move_from_action(action):
 	flat_action = action.flatten()
@@ -48,20 +45,32 @@ class TicTac4(gym.Env):
 	# observation_space[0]:
 	#   - 0 if O is going
 	#   - 1 if X is going
-	observation_space = spaces.Box(low=0, high=2, shape=(10,), dtype=np.float32)
+	# observation_space[1:10]: 1 if there is an X
+	# observation_space[10:19]: 1 if there is an O
+	observation_space = spaces.Box(low=0, high=1, shape=(19,), dtype=np.uint8)
 
 	def __init__(self, opponent_models=[RandomModel(action_space)], agent_piece=X, bias_toward_recent=False):
 		# contains the piece type that the agent will use
-		self.agent_piece = agent_piece
+
+		self.random_agent_piece = agent_piece == 2
+		if not self.random_agent_piece:
+			self.agent_piece = agent_piece
+
+
 		self.bias_toward_recent = bias_toward_recent
 
 		self.opponent_models = opponent_models
 
 		self.reset()
 
-	def _getObservation(self):
+	def _getObservation(self, player):
 		""" Generate the observation from the current state """
-		return np.concatenate((np.array([int(self.agent_piece)]), self.state.flatten()))
+
+		xArray = np.array([1 if elem==X else 0 for elem in self.state.flatten()])
+		oArray = np.array([1 if elem==O else 0 for elem in self.state.flatten()])
+
+
+		return np.concatenate((np.array([int(player)]), xArray, oArray))
 
 
 	def _checkWinner(self):
@@ -90,8 +99,7 @@ class TicTac4(gym.Env):
 		return None
 
 	def _makeOpponentMove(self):
-		# try moves until one of them is legal
-		action, _ = self.current_opponent_model.predict(self._getObservation())
+		action, _ = self.current_opponent_model.predict(self._getObservation(not self.agent_piece))
 		return get_move_from_action(action)
 
 
@@ -100,7 +108,7 @@ class TicTac4(gym.Env):
 
 		# If this is an illegal move, you lose.
 		if self.state[row][col] != EMPTY:
-			return self._getObservation(), LOSS_REWARD, True, {"IllegalMove": True}
+			return self._getObservation(self.agent_piece), ILLEGAL_MOVE_REWARD, True, {"IllegalMove": True}
 
 		# If this is a legal move, play it!
 		# TODO: what if agent piece is None ?
@@ -109,18 +117,18 @@ class TicTac4(gym.Env):
 
 		# Check to see if the agent just won
 		if self._checkWinner() == self.agent_piece:
-			return self._getObservation(), WIN_REWARD, True, {}
+			return self._getObservation(self.agent_piece), WIN_REWARD, True, {}
 
 		# If its a draw
 		if self.counter == 9:
-			return self._getObservation(), DRAW_REWARD, True, {}
+			return self._getObservation(self.agent_piece), DRAW_REWARD, True, {}
 
 		# Then choose the square opponent will play on
 		opp_row, opp_col = self._makeOpponentMove()
 
 		# Check legality; if it's illegal opponent loses.
 		if self.state[opp_row][opp_col] != EMPTY:
-			return self._getObservation(), WIN_REWARD, True, {"OpponentIllegalMove": True}
+			return self._getObservation(self.agent_piece), WIN_REWARD, True, {"OpponentIllegalMove": True}
 
 		# Opponent plays and increment counter
 		self.state[opp_row][opp_col] = not self.agent_piece
@@ -128,20 +136,23 @@ class TicTac4(gym.Env):
 
 		# Check to see if the opponent just won
 		if self._checkWinner() == (not self.agent_piece):
-			return self._getObservation(), LOSS_REWARD, True, {}
+			return self._getObservation(self.agent_piece), LOSS_REWARD, True, {}
 
 		# If its a draw
 		if self.counter == 9:
-			return self._getObservation(), DRAW_REWARD, True, {}
+			return self._getObservation(self.agent_piece), DRAW_REWARD, True, {}
 
 		# If neither player has won yet
-		return self._getObservation(), 0, False, {}
+		return self._getObservation(self.agent_piece), 0, False, {}
 
 
 	def reset(self):
 		self.counter = 0 # counts the pieces on the board
 
 		self.state = np.array([[EMPTY for i in range(3)] for s in range(3)])
+
+		if self.random_agent_piece:
+			self.agent_piece = np.random.randint(low=0, high=2)
 
 		# choose a random opponent to play for this game
 		index = np.random.randint(0, high=len(self.opponent_models), dtype=int)
@@ -173,7 +184,7 @@ class TicTac4(gym.Env):
 			self.state[opp_row][opp_col] = not self.agent_piece
 			self.counter += 1
 
-		return self._getObservation()
+		return self._getObservation(self.agent_piece)
 
 	def render(self):
 		stateToPic = {

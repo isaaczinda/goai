@@ -287,140 +287,129 @@ random opponent: mean reward: 6.76, std reward 7.355433365886744
 last opponent: mean reward: 9.37, std reward 3.3620083283656514
 
 EXPERIMENT: does it improve things when I pass in whose turn it is (1 for X, 0 for O)
+At this point, in each game the agent is either randomly X or O.
 
 WHEN I DO PASS THAT IN:
 
-round 0 -- agent is X
-random opponent: mean reward: 9.12, std reward 4.077450183631923
-round 1 -- agent is O
-random opponent: mean reward: 9.54, std reward 2.964523570491555
-last opponent: mean reward: 2.38, std reward 9.692037969384973
-round 2 -- agent is X
-random opponent: mean reward: 9.35, std reward 3.5039263690893967
-last opponent: mean reward: 7.65, std reward 6.080912760433256
-round 3 -- agent is O
-random opponent: mean reward: 8.94, std reward 4.4806695928175735
-last opponent: mean reward: 3.72, std reward 9.173963156673347
-round 4 -- agent is X
-random opponent: mean reward: 8.89, std reward 4.524146328314326
-last opponent: mean reward: 7.39, std reward 6.6998432817492075
-round 5 -- agent is O
-random opponent: mean reward: 6.55, std reward 7.523130997131447
-last opponent: mean reward: -0.03, std reward 9.954853087816012
-round 6 -- agent is X
-random opponent: mean reward: 4.63, std reward 8.857939941092399
-last opponent: mean reward: 6.22, std reward 7.356058727334903
-round 7 -- agent is O
-random opponent: mean reward: 8.01, std reward 5.9615350372198606
-last opponent: mean reward: 6.14, std reward 7.218060681374188
-round 8 -- agent is X
-random opponent: mean reward: 8.08, std reward 5.857781149889435
-last opponent: mean reward: 9.87, std reward 1.5109930509436502
-round 9 -- agent is O
-random opponent: mean reward: 8.58, std reward 5.136496860701853
-last opponent: mean reward: 9.18, std reward 3.4536357653927543
-
-----
-
-
+round 0
+random opponent: mean reward: -0.48, std reward 9.988473356824857
+round 1
+random opponent: mean reward: 4.4, std reward 8.968834929911464
+last opponent: mean reward: 2.66, std reward 9.629350964628925
+round 2
+random opponent: mean reward: 9.32, std reward 3.5689774445910976
+last opponent: mean reward: 3.46, std reward 9.318175787137738
+round 3
+random opponent: mean reward: 9.54, std reward 2.9645235704915547
+last opponent: mean reward: 6.0, std reward 7.874007874011811
+round 4
+random opponent: mean reward: 9.63, std reward 2.6005960855157815
+last opponent: mean reward: 4.98, std reward 8.579020923159005
+round 5
+random opponent: mean reward: 8.87, std reward 4.541266343213091
+last opponent: mean reward: 3.6, std reward 8.867919710958146
+round 6
+random opponent: mean reward: 9.56, std reward 2.933666647729425
+last opponent: mean reward: 3.36, std reward 9.301096709528398
+round 7
+random opponent: mean reward: 8.79, std reward 4.757720042205091
+last opponent: mean reward: 4.19, std reward 8.703097149865673
+round 8
+random opponent: mean reward: 8.36, std reward 5.432347558836787
+last opponent: mean reward: 2.42, std reward 9.567841971939128
+round 9
+random opponent: mean reward: 9.36, std reward 3.462715697252664
+last opponent: mean reward: 4.69, std reward 8.018971255716036
 
 SAME CODE, WHEN I DON'T PASS THAT IN:
 
+round 0
+random opponent: mean reward: 4.76, std reward 8.79445279707612
+round 1
+random opponent: mean reward: 6.12, std reward 7.895922998611372
+last opponent: mean reward: 0.57, std reward 9.968706034385805
+round 2
+random opponent: mean reward: 9.51, std reward 3.043008379876729
+last opponent: mean reward: 4.25, std reward 8.799857953399021
+round 3
+random opponent: mean reward: 9.62, std reward 2.693622096731463
+last opponent: mean reward: 3.95, std reward 8.983178724705414
+round 4
+random opponent: mean reward: 8.93, std reward 4.4671131617634225
+last opponent: mean reward: 2.77, std reward 9.296617664505732
+round 5
+random opponent: mean reward: 9.36, std reward 3.433715189120962
+last opponent: mean reward: 4.6, std reward 8.581375181169975
+round 6
+random opponent: mean reward: 9.0, std reward 4.312771730569565
+last opponent: mean reward: 3.44, std reward 9.282585846627004
+round 7
+random opponent: mean reward: 9.29, std reward 3.6872618567169866
+last opponent: mean reward: 3.74, std reward 9.209364798942433
+round 8
+random opponent: mean reward: 8.44, std reward 5.344754437764189
+last opponent: mean reward: 2.26, std reward 9.73100200390484
+round 9
+random opponent: mean reward: 8.82, std reward 4.691225852589065
+last opponent: mean reward: 4.11, std reward 9.011542598245875
 
 
-## TODO:
+First three rounds of training when we use separate array for X and O:
 
-Motivation: why was random doing so well? Because opponent sucked (made tons of
-  illegal moves) because it was forced by play O but has just learned X.   
+round 0
+random opponent: mean reward: 6.62, std reward 7.495038358807779
+round 1
+random opponent: mean reward: 9.28, std reward 3.7258019271024057
+last opponent: mean reward: 4.73, std reward 8.782203595909174
+round 2
+random opponent: mean reward: 8.98, std reward 4.399954545219756
+last opponent: mean reward: 4.45, std reward 8.916137055922816
 
- * make players learn both sides
- * pass which color's turn it is to the player (necessary because otherwise NN has to learn who goes first)
+----
 
+round 0
+random opponent: mean reward: 1.14, std reward 9.934807496876827
+round 1
+random opponent: mean reward: 9.66, std reward 2.5854206620973685
+last opponent: mean reward: 7.27, std reward 6.829868227132937
+round 2
+random opponent: mean reward: 9.61, std reward 2.7473441721051266
+last opponent: mean reward: 5.41, std reward 8.344573086743264
 
+When we don't:
 
-SAMPLE OF PROBLEM:
+round 0
+random opponent: mean reward: 8.27, std reward 5.595274792179558
+round 1
+random opponent: mean reward: 7.83, std reward 6.212173532669542
+last opponent: mean reward: 6.98, std reward 7.132993761387992
+round 2
+random opponent: mean reward: 8.54, std reward 5.164145621494421
+last opponent: mean reward: 4.24, std reward 9.001244358420672
 
-[after 50 rounds training, agent is O]
+---
 
+round 0
+random opponent: mean reward: 7.44, std reward 6.681796165702752
+round 1
+random opponent: mean reward: 8.17, std reward 5.7576991932541945
+last opponent: mean reward: 4.22, std reward 8.99953332123394
+round 2
+random opponent: mean reward: 9.06, std reward 4.137197118823323
+last opponent: mean reward: 4.49, std reward 8.828357718171597
 
-random opponent: mean reward: -2.6, std reward 9.656086163658648
-last opponent: mean reward: 9.96, std reward 0.893532316147547
+AGENT MAKES AN ILLEGAL MOVE WHEN IT KNOWS ITS GOING TO LOSE:
+
 GAME 0:
-on step 0:
-O . X
-. . .
-. . .
----
-on step 1:
-O . X
-O X .
+step 0:
+. . X
+. O .
 . . .
 ---
-on step 2:
-O . X
-O X .
-O . .
----
-GAME 1:
-on step 0:
-O . X
-. . .
+step 1:
+. X X
+. O O
 . . .
 ---
-on step 1:
-O . X
-O X .
-. . .
----
-on step 2:
-O . X
-O X .
-O . .
----
-GAME 2:
-on step 0:
-O . X
-. . .
-. . .
----
-on step 1:
-O . X
-O X .
-. . .
----
-on step 2:
-O . X
-O X .
-O . .
----
-GAME 3:
-on step 0:
-O . X
-. . .
-. . .
----
-on step 1:
-O . X
-O X .
-. . .
----
-on step 2:
-O . X
-O X .
-O . .
----
-GAME 4:
-on step 0:
-O . X
-. . .
-. . .
----
-on step 1:
-O . X
-O X .
-. . .
----
-on step 2:
-O . X
-O X .
-O . .
+step 2:
+O made an illegal move

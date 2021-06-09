@@ -7,6 +7,8 @@ from stable_baselines.common.evaluation import evaluate_policy
 from stable_baselines.common.env_checker import check_env
 from stable_baselines.common.schedules import LinearSchedule
 
+import numpy as np
+
 class CustomMlpPolicy(FeedForwardPolicy):
     # see here for a description of how the net_arch param should be used.
     # https://github.com/hill-a/stable-baselines/blob/master/stable_baselines/common/policies.py#L32-L48
@@ -22,7 +24,9 @@ X = 1
 # opponent.
 
 agent_piece = 1 # for X
+
 past_models = []
+past_model_scores = []
 
 # startng environment, will son change
 random_env = gym.make('custom_gyms:tictac4-v0')
@@ -30,37 +34,49 @@ check_env(random_env)
 env = random_env
 
 # batch_size (number of steps per NN training) = self.n_batch / self.nminibatches
-model = PPO2(CustomMlpPolicy, random_env, verbose=False, learning_rate=LinearSchedule(100000, final_p=.0000025, initial_p=.0005).value, nminibatches=4)
-
-
+#
+# LinearSchedule(100000, final_p=.0000025, initial_p=.0005).value
+model = PPO2(CustomMlpPolicy, random_env, verbose=False, learning_rate=.0005, nminibatches=4)
 
 
 
 for i in range(50):
     # If we have a trained model, pass it into env
     if len(past_models) > 0:
-        env = gym.make('custom_gyms:tictac4-v0', opponent_models=past_models, bias_toward_recent=True, agent_piece=RANDOM)
+        env = gym.make('custom_gyms:tictac4-v0', opponent_models=past_models, bias_toward_recent=False, agent_piece=RANDOM)
         check_env(env)
 
 
     # we're just copying what's going on here:
     #  - https://github.com/hill-a/stable-baselines/blob/master/stable_baselines/common/base_class.py#L78-L84
     model.set_env(DummyVecEnv([lambda: env])) # default is 2.5e-4
-    model.learn(total_timesteps=10000) # only prints every 128 timesteps
+    model.learn(total_timesteps=5000) # only prints every 128 timesteps
 
     print(f'round {i}')
 
     # Evaluate against random_env to see how it plays against a random opponent
-    mean_reward, std_reward = evaluate_policy(model, random_env, n_eval_episodes=1000)
+    mean_reward, std_reward = evaluate_policy(model, random_env, n_eval_episodes=500)
     print(f'random opponent: mean reward: {mean_reward}, std reward {std_reward}')
 
     # Evaluate against env to see how it plays against the current opponent
     if len(past_models) > 0:
-        mean_reward, std_reward = evaluate_policy(past_models[-1], env, n_eval_episodes=1000)
+        mean_reward, std_reward = evaluate_policy(past_models[-1], env, n_eval_episodes=500)
         print(f'last opponent: mean reward: {mean_reward}, std reward {std_reward}')
 
     # past_models = [model]
-    past_models.append(model)
+
+    if len(past_models) < 5:
+        print("adding to the hall of fame")
+
+        past_models.append(model)
+        past_model_scores.append(mean_reward)
+
+    elif mean_reward > min(past_model_scores):
+        print(f'adding to the hall of fame since {min(past_model_scores)} < {mean_reward}')
+
+        idx = np.argmin(past_model_scores)
+        past_model_scores[idx] = mean_reward
+        past_models[idx] = model
 
 
 # NOW WE PLAY SOME SAMPLE GAMES:

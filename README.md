@@ -286,6 +286,46 @@ round 9........
 random opponent: mean reward: 6.76, std reward 7.355433365886744
 last opponent: mean reward: 9.37, std reward 3.3620083283656514
 
+EXPERIMENT: does it improve things when I pass in whose turn it is (1 for X, 0 for O)
+
+WHEN I DO PASS THAT IN:
+
+round 0 -- agent is X
+random opponent: mean reward: 9.12, std reward 4.077450183631923
+round 1 -- agent is O
+random opponent: mean reward: 9.54, std reward 2.964523570491555
+last opponent: mean reward: 2.38, std reward 9.692037969384973
+round 2 -- agent is X
+random opponent: mean reward: 9.35, std reward 3.5039263690893967
+last opponent: mean reward: 7.65, std reward 6.080912760433256
+round 3 -- agent is O
+random opponent: mean reward: 8.94, std reward 4.4806695928175735
+last opponent: mean reward: 3.72, std reward 9.173963156673347
+round 4 -- agent is X
+random opponent: mean reward: 8.89, std reward 4.524146328314326
+last opponent: mean reward: 7.39, std reward 6.6998432817492075
+round 5 -- agent is O
+random opponent: mean reward: 6.55, std reward 7.523130997131447
+last opponent: mean reward: -0.03, std reward 9.954853087816012
+round 6 -- agent is X
+random opponent: mean reward: 4.63, std reward 8.857939941092399
+last opponent: mean reward: 6.22, std reward 7.356058727334903
+round 7 -- agent is O
+random opponent: mean reward: 8.01, std reward 5.9615350372198606
+last opponent: mean reward: 6.14, std reward 7.218060681374188
+round 8 -- agent is X
+random opponent: mean reward: 8.08, std reward 5.857781149889435
+last opponent: mean reward: 9.87, std reward 1.5109930509436502
+round 9 -- agent is O
+random opponent: mean reward: 8.58, std reward 5.136496860701853
+last opponent: mean reward: 9.18, std reward 3.4536357653927543
+
+----
+
+
+
+SAME CODE, WHEN I DON'T PASS THAT IN:
+
 
 
 ## TODO:

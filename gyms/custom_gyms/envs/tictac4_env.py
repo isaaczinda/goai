@@ -18,7 +18,7 @@ DRAW_REWARD = 0
 # DRAW_REWARD = -50
 # ILLEGAL_MOVE_REWARD = -10
 
-def get_move_from_array(action):
+def get_move_from_action(action):
 	flat_action = action.flatten()
 	target = np.argmax(flat_action)
 
@@ -44,7 +44,11 @@ class TicTac4(gym.Env):
 	action_space = spaces.Box(low=-1, high=1, shape=(9,), dtype=np.float32)
 
 	# allowed values are 0 - 2 to represent EMPTY, O, and X states
-	observation_space = spaces.Tuple((spaces.Discrete(2), spaces.Box(low=0, high=2, shape=(9,), dtype=np.float32)))
+	#
+	# observation_space[0]:
+	#   - 0 if O is going
+	#   - 1 if X is going
+	observation_space = spaces.Box(low=0, high=2, shape=(10,), dtype=np.float32)
 
 	def __init__(self, opponent_models=[RandomModel(action_space)], agent_piece=X, bias_toward_recent=False):
 		# contains the piece type that the agent will use
@@ -54,6 +58,11 @@ class TicTac4(gym.Env):
 		self.opponent_models = opponent_models
 
 		self.reset()
+
+	def _getObservation(self):
+		""" Generate the observation from the current state """
+		return np.concatenate((np.array([int(self.agent_piece)]), self.state.flatten()))
+
 
 	def _checkWinner(self):
 		""" Returns None if neither player has won. Returns 0 if O has won
@@ -82,16 +91,16 @@ class TicTac4(gym.Env):
 
 	def _makeOpponentMove(self):
 		# try moves until one of them is legal
-		action, _ = self.current_opponent_model.predict(self.state.flatten())
-		return get_move_from_array(action)
+		action, _ = self.current_opponent_model.predict(self._getObservation())
+		return get_move_from_action(action)
 
 
 	def step(self, action):
-		row, col = get_move_from_array(action)
+		row, col = get_move_from_action(action)
 
 		# If this is an illegal move, you lose.
 		if self.state[row][col] != EMPTY:
-			return self.state.flatten(), LOSS_REWARD, True, {"IllegalMove": True}
+			return self._getObservation(), LOSS_REWARD, True, {"IllegalMove": True}
 
 		# If this is a legal move, play it!
 		# TODO: what if agent piece is None ?
@@ -100,18 +109,18 @@ class TicTac4(gym.Env):
 
 		# Check to see if the agent just won
 		if self._checkWinner() == self.agent_piece:
-			return self.state.flatten(), WIN_REWARD, True, {}
+			return self._getObservation(), WIN_REWARD, True, {}
 
 		# If its a draw
 		if self.counter == 9:
-			return self.state.flatten(), DRAW_REWARD, True, {}
+			return self._getObservation(), DRAW_REWARD, True, {}
 
 		# Then choose the square opponent will play on
 		opp_row, opp_col = self._makeOpponentMove()
 
 		# Check legality; if it's illegal opponent loses.
 		if self.state[opp_row][opp_col] != EMPTY:
-			return self.state.flatten(), WIN_REWARD, True, {"OpponentIllegalMove": True}
+			return self._getObservation(), WIN_REWARD, True, {"OpponentIllegalMove": True}
 
 		# Opponent plays and increment counter
 		self.state[opp_row][opp_col] = not self.agent_piece
@@ -119,14 +128,14 @@ class TicTac4(gym.Env):
 
 		# Check to see if the opponent just won
 		if self._checkWinner() == (not self.agent_piece):
-			return self.state.flatten(), LOSS_REWARD, True, {}
+			return self._getObservation(), LOSS_REWARD, True, {}
 
 		# If its a draw
 		if self.counter == 9:
-			return self.state.flatten(), DRAW_REWARD, True, {}
+			return self._getObservation(), DRAW_REWARD, True, {}
 
 		# If neither player has won yet
-		return self.state.flatten(), 0, False, {}
+		return self._getObservation(), 0, False, {}
 
 
 	def reset(self):
@@ -164,7 +173,7 @@ class TicTac4(gym.Env):
 			self.state[opp_row][opp_col] = not self.agent_piece
 			self.counter += 1
 
-		return self.state.flatten()
+		return self._getObservation()
 
 	def render(self):
 		stateToPic = {

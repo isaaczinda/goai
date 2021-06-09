@@ -43,7 +43,7 @@ model = PPO2(CustomMlpPolicy, random_env, verbose=False, learning_rate=0.00025, 
 
 
 
-for i in range(50):
+for i in range(10):
     # If we have a trained model, pass it into env
     if len(past_models) > 0:
         agent_piece = not agent_piece
@@ -57,7 +57,11 @@ for i in range(50):
     model.set_env(DummyVecEnv([lambda: env])) # default is 2.5e-4
     model.learn(total_timesteps=10000) # only prints every 128 timesteps
 
-    print(f'round {i} -- agent is {agent_piece}')
+    agent_piece_name = "X"
+    if int(agent_piece) == 0:
+        agent_piece_name = "O"
+
+    print(f'round {i} -- agent is {agent_piece_name}')
 
     # Evaluate against random_env to see how it plays against a random opponent
     mean_reward, std_reward = evaluate_policy(model, random_env, n_eval_episodes=1000)
@@ -71,22 +75,35 @@ for i in range(50):
     # past_models = [model]
     past_models.append(model)
 
+
+# agent piece is X, opponent piece is
+test_env = gym.make('custom_gyms:tictac4-v0', opponent_models=[past_models[-1]], agent_piece=1)
+check_env(test_env)
+
 for n in range(15):
+    print("")
     print(f'GAME {n}:')
-    obs = env.reset()
+    obs = test_env.reset()
     for i in range(1000):
-        print(f'on step {i}:')
-        action, _states = model.predict(obs)
-        obs, reward, done, info = env.step(action)
+        print(f'step {i}:')
+        # use 2 ago, since better for O
+        action, _ = past_models[-2].predict(obs)
+        obs, reward, done, info = test_env.step(action)
+
+        agent_piece_name = "X"
+        opponent_piece_name = "O"
+        if agent_piece == 0:
+            agent_piece_name = "O"
+            opponent_piece_name = "X"
 
         if info.get("IllegalMove", False):
-            print("Agent made an illigal move, spanking...")
+            print(f"{agent_piece_name} made an illegal move")
             break
         if info.get("OpponentIllegalMove", False):
-            print("Opponent made an illigal move")
+            print(f"{opponent_piece_name} made an illegal move")
             break
 
-        env.render()
+        test_env.render()
 
         if done:
             break

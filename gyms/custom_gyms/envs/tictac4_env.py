@@ -44,11 +44,12 @@ class TicTac4(gym.Env):
 	action_space = spaces.Box(low=-1, high=1, shape=(9,), dtype=np.float32)
 
 	# allowed values are 0 - 2 to represent EMPTY, O, and X states
-	observation_space = spaces.Box(low=0, high=2, shape=(9,), dtype=np.float32)
+	observation_space = spaces.Tuple((spaces.Discrete(2), spaces.Box(low=0, high=2, shape=(9,), dtype=np.float32)))
 
-	def __init__(self, opponent_models=[RandomModel(action_space)], agent_piece=X):
+	def __init__(self, opponent_models=[RandomModel(action_space)], agent_piece=X, bias_toward_recent=False):
 		# contains the piece type that the agent will use
 		self.agent_piece = agent_piece
+		self.bias_toward_recent = bias_toward_recent
 
 		self.opponent_models = opponent_models
 
@@ -135,6 +136,20 @@ class TicTac4(gym.Env):
 
 		# choose a random opponent to play for this game
 		index = np.random.randint(0, high=len(self.opponent_models), dtype=int)
+
+		# at most 2 first entries are kept "high-priority" (at least 50% of weight)
+		if self.bias_toward_recent:
+			bias = []
+			for i in range(len(self.opponent_models)):
+				if i < 2:
+					bias.append(.5)
+				else:
+					bias.append(1/len(self.opponent_models))
+
+			# normalize bias
+			bias = np.array(bias) / sum(bias)
+			index = np.random.choice(len(self.opponent_models), p=bias)
+
 		self.current_opponent_model = self.opponent_models[index]
 
 		# If our piece is O, this means the opponent is X and they should
@@ -142,7 +157,12 @@ class TicTac4(gym.Env):
 		# We put this here because the starting environment which the agent
 		# first looks at should already have the opponent's move.
 		if self.agent_piece == O:
-			self._makeOpponentMove()
+			opp_row, opp_col = self._makeOpponentMove()
+
+			# Actually place the opponent piece. Since this is the first
+			# piece played, it can't be illegal and it can't be a winner!
+			self.state[opp_row][opp_col] = not self.agent_piece
+			self.counter += 1
 
 		return self.state.flatten()
 

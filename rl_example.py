@@ -6,6 +6,9 @@ from stable_baselines import PPO2
 from stable_baselines.common.evaluation import evaluate_policy
 from stable_baselines.common.env_checker import check_env
 from stable_baselines.common.schedules import LinearSchedule
+from stable_baselines.common.callbacks import BaseCallback
+
+from tictac import TicTacEnv, RandomModel
 
 import numpy as np
 
@@ -16,20 +19,23 @@ class CustomMlpPolicy(FeedForwardPolicy):
         super(CustomMlpPolicy, self).__init__(sess, ob_space, ac_space, n_env, n_steps, n_batch, reuse,
                                         feature_extraction="mlp", net_arch=[128, 128], **_kwargs)
 
+class SaveTrainingScores(BaseCallback):
+    def __init__(self, verbose=1):
+        super(SaveTrainingScores, self).__init__(verbose)
+
+    def _on_training_end(self):
+        print(self.training_env.get_attr('scores'))
+        print("Training completed")
+
 RANDOM = 2
 O = 0
 X = 1
-
-# Since opponent_model wasn't set, this environment uses a random
-# opponent.
-
-agent_piece = 1 # for X
 
 past_models = []
 past_model_scores = []
 
 # startng environment, will son change
-random_env = gym.make('custom_gyms:tictac4-v0')
+random_env = TicTacEnv([RandomModel(TicTacEnv.action_space)])
 check_env(random_env)
 env = random_env
 
@@ -39,18 +45,17 @@ env = random_env
 model = PPO2(CustomMlpPolicy, random_env, verbose=False, learning_rate=.0005, nminibatches=4)
 
 
-
 for i in range(50):
     # If we have a trained model, pass it into env
     if len(past_models) > 0:
-        env = gym.make('custom_gyms:tictac4-v0', opponent_models=past_models, bias_toward_recent=False, agent_piece=RANDOM)
+        env = TicTacEnv(past_models, bias_toward_recent=False, agent_piece=RANDOM)
         check_env(env)
 
 
     # we're just copying what's going on here:
     #  - https://github.com/hill-a/stable-baselines/blob/master/stable_baselines/common/base_class.py#L78-L84
     model.set_env(DummyVecEnv([lambda: env])) # default is 2.5e-4
-    model.learn(total_timesteps=5000) # only prints every 128 timesteps
+    model.learn(total_timesteps=5000, callback=SaveTrainingScores()) # only prints every 128 timesteps
 
     print(f'round {i}')
 
@@ -83,31 +88,38 @@ for i in range(50):
 # the latest model plays itself
 
 # agent piece is X, opponent piece is O
-test_env = gym.make('custom_gyms:tictac4-v0', opponent_models=[past_models[-1]], agent_piece=X)
-check_env(test_env)
-
-for n in range(15):
-    print("")
-    print(f'GAME {n}:')
-    obs = test_env.reset()
-    for i in range(1000):
-        print(f'step {i}:')
-        # use 2 ago, since better for O
-        action, _ = past_models[-1].predict(obs)
-        obs, reward, done, info = test_env.step(action)
-
+for description, opponents in [("agent plays itself", [past_models[-1]]), ("agent plays hall of fame", past_models)]:
+    for agent_piece in [X, O]:
         agent_piece_name = "X"
         opponent_piece_name = "O"
         if agent_piece == O:
             agent_piece_name = "O"
             opponent_piece_name = "X"
 
-        test_env.render()
+        print('')
+        print(f'--- {description} as {agent_piece_name} ---')
 
-        if info.get("IllegalMove", False):
-            print(f"({agent_piece_name} made an illegal move)")
-        if info.get("OpponentIllegalMove", False):
-            print(f"({opponent_piece_name} made an illegal move)")
+        test_env = TicTacEnv(opponents, agent_piece=agent_piece)
+        check_env(test_env)
 
-        if done:
-            break
+        for n in range(5):
+            print("")
+            print(f'GAME {n}:')
+            obs = test_env.reset()
+            for i in range(1000):
+                print(f'step {i}:')
+                # use 2 ago, since better for O
+                action, _ = past_models[-1].predict(obs)
+                obs, reward, done, info = test_env.step(action)
+
+
+
+                test_env.render()
+
+                if info.get("IllegalMove", False):
+                    print(f"({agent_piece_name} made an illegal move)")
+                if info.get("OpponentIllegalMove", False):
+                    print(f"({opponent_piece_name} made an illegal move)")
+
+                if done:
+                    break

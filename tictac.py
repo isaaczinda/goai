@@ -9,6 +9,10 @@ O = 0
 X = 1
 EMPTY = 2
 
+WIN_IDX = 0
+LOSS_IDX = 1
+
+
 WIN_REWARD = 10
 LOSS_REWARD = -10
 DRAW_REWARD = 0
@@ -34,8 +38,7 @@ class RandomModel:
 		return action, None
 
 
-
-class TicTac4(gym.Env):
+class TicTacEnv(gym.Env):
 	metadata = {'render.modes': ['human']}
 
 	action_space = spaces.Box(low=-1, high=1, shape=(9,), dtype=np.float32)
@@ -49,8 +52,12 @@ class TicTac4(gym.Env):
 	# observation_space[10:19]: 1 if there is an O
 	observation_space = spaces.Box(low=0, high=1, shape=(19,), dtype=np.uint8)
 
-	def __init__(self, opponent_models=[RandomModel(action_space)], agent_piece=X, bias_toward_recent=False):
+	def __init__(self, opponent_models, agent_piece=X, bias_toward_recent=False):
 		# contains the piece type that the agent will use
+
+		# (wins, losses) against a particular opponent. In the event of a
+		# draw, this is considered .5 win and .5 loss.
+		self.scores = [[0, 0] for i in opponent_models]
 
 		self.random_agent_piece = agent_piece == 2
 		if not self.random_agent_piece:
@@ -99,7 +106,8 @@ class TicTac4(gym.Env):
 		return None
 
 	def _makeOpponentMove(self):
-		action, _ = self.current_opponent_model.predict(self._getObservation(not self.agent_piece))
+		opponent_model = self.opponent_models[self.opponent_model_index]
+		action, _ = opponent_model.predict(self._getObservation(not self.agent_piece))
 		return get_move_from_action(action)
 
 
@@ -108,19 +116,22 @@ class TicTac4(gym.Env):
 
 		# If this is an illegal move, you lose.
 		if self.state[row][col] != EMPTY:
+			self.scores[self.opponent_model_index][LOSS_IDX] += 1
 			return self._getObservation(self.agent_piece), ILLEGAL_MOVE_REWARD, True, {"IllegalMove": True}
 
 		# If this is a legal move, play it!
-		# TODO: what if agent piece is None ?
 		self.state[row][col] = self.agent_piece
 		self.counter += 1
 
 		# Check to see if the agent just won
 		if self._checkWinner() == self.agent_piece:
+			self.scores[self.opponent_model_index][WIN_IDX] += 1
 			return self._getObservation(self.agent_piece), WIN_REWARD, True, {}
 
 		# If its a draw
 		if self.counter == 9:
+			self.scores[self.opponent_model_index][WIN_IDX] += .5
+			self.scores[self.opponent_model_index][LOSS_IDX] += .5
 			return self._getObservation(self.agent_piece), DRAW_REWARD, True, {}
 
 		# Then choose the square opponent will play on
@@ -128,6 +139,7 @@ class TicTac4(gym.Env):
 
 		# Check legality; if it's illegal opponent loses.
 		if self.state[opp_row][opp_col] != EMPTY:
+			self.scores[self.opponent_model_index][WIN_IDX] += 1
 			return self._getObservation(self.agent_piece), WIN_REWARD, True, {"OpponentIllegalMove": True}
 
 		# Opponent plays and increment counter
@@ -136,10 +148,13 @@ class TicTac4(gym.Env):
 
 		# Check to see if the opponent just won
 		if self._checkWinner() == (not self.agent_piece):
+			self.scores[self.opponent_model_index][LOSS_IDX] += 1
 			return self._getObservation(self.agent_piece), LOSS_REWARD, True, {}
 
 		# If its a draw
 		if self.counter == 9:
+			self.scores[self.opponent_model_index][WIN_IDX] += .5
+			self.scores[self.opponent_model_index][LOSS_IDX] += .5
 			return self._getObservation(self.agent_piece), DRAW_REWARD, True, {}
 
 		# If neither player has won yet
@@ -170,7 +185,7 @@ class TicTac4(gym.Env):
 			bias = np.array(bias) / sum(bias)
 			index = np.random.choice(len(self.opponent_models), p=bias)
 
-		self.current_opponent_model = self.opponent_models[index]
+		self.opponent_model_index = index
 
 		# If our piece is O, this means the opponent is X and they should
 		# go first.
@@ -197,4 +212,3 @@ class TicTac4(gym.Env):
 			for j in range(3):
 				print(stateToPic[self.state[i][j]], end = " ")
 			print("")
-		print("---")

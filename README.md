@@ -413,3 +413,29 @@ step 1:
 ---
 step 2:
 O made an illegal move
+
+
+
+
+-----
+
+0: ELO 814.018430791166, mean reward vs. random player: 9.16, games played: 35747.0
+1: ELO 969.3258710741269, mean reward vs. random player: 9.1, games played: 35584.0
+3: ELO 868.3242476847793, mean reward vs. random player: 8.7, games played: 33298.0
+4: ELO 940.3572374211278, mean reward vs. random player: 7.9, games played: 34812.0
+5: ELO 851.6115543528254, mean reward vs. random player: 8.36, games played: 32684.0
+6: ELO 925.0103017601375, mean reward vs. random player: 7.28, games played: 35100.0
+7: ELO 754.5441785126118, mean reward vs. random player: 7.94, games played: 34252.0
+8: ELO 977.9711962597112, mean reward vs. random player: 7.78, games played: 30580.0
+10: ELO 748.1163560897344, mean reward vs. random player: 9.26, games played: 33129.0
+11: ELO 811.0723534836602, mean reward vs. random player: 8.26, games played: 35692.0
+12: ELO 837.6655254326932, mean reward vs. random player: 8.9, games played: 35237.0
+13: ELO 912.6010728017847, mean reward vs. random player: 8.58, games played: 33733.0
+14: ELO 808.3897116208084, mean reward vs. random player: 9.14, games played: 34117.0
+15: ELO 1049.726033560164, mean reward vs. random player: 8.18, games played: 34769.0
+16: ELO 924.7260079376642, mean reward vs. random player: 8.94, games played: 32904.0
+17: ELO 824.9298210829738, mean reward vs. random player: 8.76, games played: 33083.0
+18: ELO 795.0783187578061, mean reward vs. random player: 7.8, games played: 34773.0
+19: ELO 1030.605126859194, mean reward vs. random player: 6.98, games played: 32208.0
+22: ELO 380.7631379547427, mean reward vs. random player: -15.32, games played: 5156.0
+23: ELO 448.3887835821865, mean reward vs. random player: -7.84, games played: 5218.0

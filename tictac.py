@@ -18,7 +18,6 @@ LOSS_REWARD = -10
 DRAW_REWARD = 0
 ILLEGAL_MOVE_REWARD = -20
 
-
 def get_move_from_action(action):
 	flat_action = action.flatten()
 	target = np.argmax(flat_action)

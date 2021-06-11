@@ -37,7 +37,6 @@ class RandomModel:
 		action = self.action_space.sample()
 		return action, None
 
-
 class TicTacEnv(gym.Env):
 	metadata = {'render.modes': ['human']}
 

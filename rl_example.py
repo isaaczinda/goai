@@ -16,6 +16,9 @@ from tictac import TicTacEnv, RandomModel
 
 import numpy as np
 import time
+from os import path
+
+FILE_PATH = path.dirname(path.realpath(__file__))
 
 
 class CustomMlpPolicy(FeedForwardPolicy):
@@ -70,47 +73,51 @@ def evaluateAgainstRandomPolicy(policy):
     random_env = TicTacEnv([RandomModel(TicTacEnv.action_space)])
     return evaluate_policy(policy, random_env, n_eval_episodes=500)
 
-if __name__ == '__main__':
-    fixed_policies = [RandomModel(TicTacEnv.action_space)]
 
-    # the 0th one of these is the lowest active policy
-    active_policies = [makePolicy(), makePolicy(), makePolicy()]
+fixed_policies = [RandomModel(TicTacEnv.action_space)]
 
-    for i in range(10):
-        winFractions = []
+# the 0th one of these is the lowest active policy
+active_policies = [makePolicy(), makePolicy(), makePolicy()]
 
-        while True:
-            print("___training_loop___")
+for i in range(25):
+    winFractions = []
 
-            # train lowest active policy against all fixed policies
-            wins, losses = trainPolicy(active_policies[0], fixed_policies)
-            winFractions.append(wins / (losses + wins))
+    while True:
+        print("___training_loop___")
 
-            # exit if the win fraction this evaluation improves by less than 1% over
-            # the last win fraction.
-            if len(winFractions) >= 2:
-                print(f'win fraction: previous: {winFractions[-2]}, current: {winFractions[-1]}')
+        # train lowest active policy against all fixed policies
+        wins, losses = trainPolicy(active_policies[0], fixed_policies)
+        winFractions.append(wins / (losses + wins))
 
-                if abs(winFractions[-1]-winFractions[-2]) < .01:
-                    break
+        # exit if the win fraction this evaluation improves by less than 1% over
+        # the last win fraction.
+        if len(winFractions) >= 2:
+            print(f'win fraction: previous: {winFractions[-2]}, current: {winFractions[-1]}')
 
-            # train non-lowest active policies against lowest active policy and fixes policied
-            for policy in active_policies:
-                trainPolicy(policy, [active_policies[0]] + fixed_policies)
+            if abs(winFractions[-1]-winFractions[-2]) < .01:
+                break
 
-            # print result of all agents vs. random policy
-            print("active policies vs random agent: ", end="")
-            for policy in active_policies:
-                meanReward, _ = evaluateAgainstRandomPolicy(policy)
-                print(meanReward, end=", ")
-            print("")
+        # train non-lowest active policies against lowest active policy and fixes policied
+        for policy in active_policies:
+            trainPolicy(policy, [active_policies[0]] + fixed_policies)
 
-        # make the lowest active policy a fixed policy, then add a new random
-        # policy
-        fixed_policies.append(active_policies[0])
-        active_policies = active_policies[1:]
-        active_policies.append(makePolicy())
-        print(f'THERE ARE NOW {len(fixed_policies)} FIXED POLICIES')
+        # print result of all agents vs. random policy
+        print("active policies vs random agent: ", end="")
+        for policy in active_policies:
+            meanReward, _ = evaluateAgainstRandomPolicy(policy)
+            print(meanReward, end=", ")
+        print("")
+
+    # make the lowest active policy a fixed policy, then add a new random
+    # policy
+    fixed_policies.append(active_policies[0])
+    active_policies = active_policies[1:]
+    active_policies.append(makePolicy())
+    print(f'THERE ARE NOW {len(fixed_policies)} FIXED POLICIES')
+
+# don't save the 0th model, since this is a random one and won't save.
+for i, policy in enumerate(fixed_policies[1:]):
+    policy.save(path.join(FILE_PATH, f'models/{i+1}-model'))
 
 
 #
